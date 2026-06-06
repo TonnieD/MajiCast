@@ -22,7 +22,7 @@ import logging
 import warnings
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Suppress XGBoost's pickle-version mismatch UserWarning. The model predicts
 # correctly — this is a cosmetic warning about using save_model() instead of
@@ -170,16 +170,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow the Vercel frontend and local dev
+# CORS — allow the Vercel frontend, local dev, and LAN devices
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://*.vercel.app",        # Vercel preview deployments
-        "https://majicast.vercel.app", # production (update when known)
+        "http://192.168.147.105:3000",  # host machine LAN IP
+        "https://*.vercel.app",          # Vercel preview deployments
+        "https://majicast.vercel.app",   # production (update when known)
     ],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=(
+        r"https://.*\.vercel\.app"
+        r"|http://192\.168\.\d+\.\d+(:\d+)?"   # any 192.168.x.x LAN device
+        r"|http://10\.\d+\.\d+\.\d+(:\d+)?"    # any 10.x.x.x LAN device
+        r"|http://172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?"  # 172.16-31.x.x
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

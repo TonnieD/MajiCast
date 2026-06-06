@@ -66,8 +66,8 @@ function parseCSV(text: string): Record<string, string>[] {
 // Helper to find the CSV file in various possible build/runtime paths
 function getCSVPath(): string {
   const paths = [
+    path.join(process.cwd(), "data", "processed", "environmental.csv"),  // Docker volume mount
     path.join(process.cwd(), "..", "data", "processed", "environmental.csv"),
-    path.join(process.cwd(), "data", "processed", "environmental.csv"),
     path.join(process.cwd(), "web", "..", "data", "processed", "environmental.csv"),
   ];
 
@@ -76,7 +76,7 @@ function getCSVPath(): string {
       return p;
     }
   }
-  throw new Error("Could not locate environmental.csv in any expected paths.");
+  throw new Error(`Could not locate environmental.csv. Searched:\n${paths.join("\n")}`);
 }
 
 const REQUIRED_FEATURES = [
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call inference service to generate predictions
-    const backendUrl = process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
     
     // Structure rows for FastAPI model
     const inferenceRows = parsed.map(row => {

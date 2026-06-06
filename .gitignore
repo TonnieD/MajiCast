@@ -5,3 +5,11 @@ __pycache__/
 *.pyd
 .Python
 cleanwaterai.egg-info/
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# web/data/ CSV copies are build artifacts — source of truth is data/processed/
+web/data/

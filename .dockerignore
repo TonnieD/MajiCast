@@ -1,0 +1,15 @@
+.git
+node_modules
+web/node_modules
+web/.next
+.env
+.env.local
+web/.env.local
+inference/nltk_data
+.gemini
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.devcontainer
+.vscode

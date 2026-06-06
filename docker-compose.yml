@@ -1,0 +1,44 @@
+
+networks:
+  majicast_network:
+    driver: bridge
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "0.0.0.0:8000:8000"   # Bind to all interfaces — accepts external traffic
+    networks:
+      - majicast_network
+    restart: always
+
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* baked at build time — used by the browser (client-side)
+        # Override HOST_IP with your machine's LAN IP for external access, e.g.,:
+        #   HOST_IP=192.168.1.50 docker compose up --build
+        - NEXT_PUBLIC_INFERENCE_API_URL=http://${HOST_IP:-localhost}:8000
+        - GEMINI_API_KEY=${GEMINI_API_KEY}
+    ports:
+      - "0.0.0.0:3000:3000"   # Bind to all interfaces — accepts external traffic
+    volumes:
+      # Mount local data/ into the container so /api/data can read environmental.csv
+      - ./data:/app/data:ro
+    environment:
+      # Server-side (SSR / API routes) — uses Docker internal DNS, not localhost
+      - INFERENCE_API_URL=http://backend:8000
+      # Client-side (browser) — must be reachable from the user's machine
+      - NEXT_PUBLIC_INFERENCE_API_URL=http://${HOST_IP:-localhost}:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - .env
+    networks:
+      - majicast_network
+    depends_on:
+      - backend
+    restart: always
