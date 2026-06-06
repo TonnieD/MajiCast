@@ -11,5 +11,5 @@ cleanwaterai.egg-info/
 .env.local
 .env.*.local
 
-# web/data/ CSV copies are build artifacts — source of truth is data/processed/
-web/data/
+# web/data/ is intentionally tracked — needed for Railway/Vercel builds
+# Update web/data/processed/environmental.csv when data/processed/ changes

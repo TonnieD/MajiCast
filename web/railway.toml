@@ -1,0 +1,10 @@
+[build]
+# Dockerfile is inside the web/ directory (service root is set to web/ in Railway)
+dockerfilePath = "Dockerfile"
+watchPatterns = ["src/**", "public/**", "package*.json", "next.config.ts", "data/**"]
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -170,7 +170,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow the Vercel frontend, local dev, and LAN devices
+# CORS — allow the Vercel frontend, local dev, LAN devices, and Railway
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -178,10 +178,14 @@ app.add_middleware(
         "http://localhost:3001",
         "http://192.168.147.105:3000",  # host machine LAN IP
         "https://*.vercel.app",          # Vercel preview deployments
-        "https://majicast.vercel.app",   # production (update when known)
+        "https://majicast.vercel.app",   # Vercel production
+        "https://*.railway.app",         # Railway deployments
+        "https://*.up.railway.app",      # Railway public domains
     ],
     allow_origin_regex=(
         r"https://.*\.vercel\.app"
+        r"|https://.*\.railway\.app"         # all Railway subdomains
+        r"|https://.*\.up\.railway\.app"     # all Railway public domains
         r"|http://192\.168\.\d+\.\d+(:\d+)?"   # any 192.168.x.x LAN device
         r"|http://10\.\d+\.\d+\.\d+(:\d+)?"    # any 10.x.x.x LAN device
         r"|http://172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?"  # 172.16-31.x.x
