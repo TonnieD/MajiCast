@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .Python
 cleanwaterai.egg-info/
+inference/nltk_data/
 
 # Secrets — never commit
 .env

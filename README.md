@@ -108,6 +108,34 @@ The frontend is a modern web application created using Next.js 14, TypeScript, T
 
 ---
 
+### 3. Run Everything with Docker Compose
+
+You can containerize and launch both the Next.js frontend and the FastAPI backend using Docker Compose in a single command.
+
+**Prerequisites:**
+- Docker and Docker Compose installed.
+
+**Setup & Start:**
+1. Navigate to the project root.
+2. Ensure you have a `.env` file in the root containing your keys:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+3. Run the following command to build and launch the containers:
+   ```bash
+   docker compose up --build
+   ```
+   This builds both services, links them through an internal network (allowing server-to-server calls to bypass local ports), and exposes:
+   - Next.js Frontend: `http://localhost:3000`
+   - FastAPI Backend: `http://localhost:8000`
+
+4. To stop the containers, run:
+   ```bash
+   docker compose down
+   ```
+
+---
+
 ## Application Features
 
 - **Home**: Learn about MajiCast's mission, vision, and the core development team (Diana, Phanela, Lewis, Margaret, and Anthony).
