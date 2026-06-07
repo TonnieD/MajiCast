@@ -27,9 +27,9 @@ MajiCast/
 │   ├── 05_xgboost_model_training.ipynb       # XGBoost model development
 │   ├── 06_nlp_model_training.ipynb           # TF-IDF & text classifier training
 │   └── train_isolation_forest.ipynb          # Sensor anomaly detection
-├── vercel.json                                # Root Vercel configuration (Next.js)
 └── web/                                       # Next.js Web Application
     ├── public/                                # Static assets (images, markers)
+    ├── vercel.json                            # Vercel configuration
     └── src/
         ├── app/                               # Next.js App Router (Home, Maps, NLP)
         │   └── api/data/route.ts              # Data query, upload, & proxy handler
@@ -113,15 +113,15 @@ The project is deployed using a decoupled infrastructure strategy:
 * **Backend**: FastAPI deployed on **Render** (`inference/` directory).
 
 ### 1. Vercel Configuration
-The root `vercel.json` configures Vercel to build the Next.js frontend in the `web/` subdirectory:
+To avoid build failures with Vercel's default Next.js detection in a monorepo, configure the project by setting the **Root Directory** to `web` in the Vercel Dashboard under **Settings** → **General** → **Root Directory**.
+
+Inside the `web/` subdirectory, we use a minimal `vercel.json` to declare the framework:
 ```json
 {
-  "buildCommand": "cd web && npm run build",
-  "outputDirectory": "web/.next",
-  "installCommand": "cd web && npm install",
   "framework": "nextjs"
 }
 ```
+This native directory configuration avoids having to override build/install commands at the repository root.
 
 ### 2. Next.js Routing
 Next.js serverless functions proxy requests to the FastAPI backend using environment variables dynamically:
