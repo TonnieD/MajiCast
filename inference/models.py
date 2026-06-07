@@ -84,7 +84,7 @@ def _ensure_nltk() -> None:
     for resource_path, resource_name in _NLTK_RESOURCES:
         try:
             nltk.data.find(resource_path)
-        except LookupError:
+        except (LookupError, OSError, Exception):
             nltk.download(resource_name, download_dir=tmp_dir, quiet=True)
 
     _stop_words = set(stopwords.words("english"))

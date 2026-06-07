@@ -35,7 +35,7 @@ warnings.filterwarnings(
 )
 
 # ── CRITICAL: register shims BEFORE any joblib.load() ──────────────────────
-from inference.models import (
+from models import (
     WaterQualityPipeline,
     clean_text,          # used in /predict/nlp handler
     register_for_pickle,
@@ -87,7 +87,7 @@ def ensure_nltk_resources() -> None:
         try:
             nltk.data.find(resource_path)
             logger.info("NLTK resource present: %s", resource_name)
-        except LookupError:
+        except (LookupError, OSError, Exception):
             logger.info("Downloading NLTK resource: %s", resource_name)
             nltk.download(resource_name, download_dir=str(NLTK_DIR), quiet=True)
 
@@ -119,7 +119,7 @@ DEFAULT_ENCODED_VALUE = 0   # station_encoded default for anonymous sensor readi
 
 
 # ── NLP text cleaning ──────────────────────────────────────────────────────
-# clean_text is imported from inference.models (single source of truth).
+# clean_text is imported from models (single source of truth).
 # It is also registered on __main__ by register_for_pickle() so that the
 # sklearn FunctionTransformer inside nlp_pipeline.pkl can resolve its
 # __main__.clean_texts reference at deserialization time.
