@@ -27,9 +27,9 @@ MajiCast/
 │   ├── 05_xgboost_model_training.ipynb       # XGBoost model development
 │   ├── 06_nlp_model_training.ipynb           # TF-IDF & text classifier training
 │   └── train_isolation_forest.ipynb          # Sensor anomaly detection
+├── vercel.json                                # Multi-service Vercel configuration
 └── web/                                       # Next.js Web Application
     ├── public/                                # Static assets (images, markers)
-    ├── vercel.json                            # Vercel configuration
     └── src/
         ├── app/                               # Next.js App Router (Home, Maps, NLP)
         │   └── api/data/route.ts              # Data query, upload, & proxy handler
@@ -108,27 +108,44 @@ MajiCast trains and serves three distinct machine learning models designed to ad
 
 ## 🚀 Deployment
 
-The project is deployed using a decoupled infrastructure strategy:
-* **Frontend**: Next.js deployed on **Vercel** (`web/` directory).
-* **Backend**: FastAPI deployed on **Render** (`inference/` directory).
+The project is deployed to **Vercel** as a unified project using **Vercel Multi-Service (experimentalServices)**. The frontend (Next.js) and backend (FastAPI) are run in parallel, and traffic is routed automatically according to the configuration.
 
 ### 1. Vercel Configuration
-To avoid build failures with Vercel's default Next.js detection in a monorepo, configure the project by setting the **Root Directory** to `web` in the Vercel Dashboard under **Settings** → **General** → **Root Directory**.
-
-Inside the `web/` subdirectory, we use a minimal `vercel.json` to declare the framework:
+The configuration is declared in the root [vercel.json](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/vercel.json):
 ```json
 {
-  "framework": "nextjs"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "experimentalServices": {
+    "frontend": {
+      "root": "web",
+      "routePrefix": "/",
+      "framework": "nextjs"
+    },
+    "backend": {
+      "root": "inference",
+      "routePrefix": "/_/backend",
+      "framework": "fastapi",
+      "entrypoint": "main.py"
+    }
+  }
 }
 ```
-This native directory configuration avoids having to override build/install commands at the repository root.
+
+#### Vercel Dashboard Settings:
+To enable multi-service deployment, set/reset the following in the Vercel Dashboard (**Settings** → **General**):
+* **Framework Preset**: `Other`
+* **Root Directory**: repo root (leave empty)
 
 ### 2. Next.js Routing
-Next.js serverless functions proxy requests to the FastAPI backend using environment variables dynamically:
+The frontend makes API calls using the `/_/backend` prefix (e.g. `/_/backend/predict/sensor`), which are automatically proxied to the FastAPI service by Vercel's router.
+
+For server-side requests (such as within Next.js API routes), the helper handles the relative prefix by prepending the host:
 ```typescript
-let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL;
+let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "/_/backend";
 if (backendUrl.startsWith("/")) {
-  const host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+  const host = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : `http://${req.headers.get("host") || "localhost:3000"}`;
   backendUrl = `${host}${backendUrl}`;
 }
 ```

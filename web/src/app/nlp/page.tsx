@@ -48,7 +48,8 @@ export default function NLPPage() {
 
     setLoading(true); setResult(null); setError(null);
     try {
-      const res = await fetch("/api/predict/nlp", {
+      const apiUrl = process.env.NEXT_PUBLIC_INFERENCE_API_URL || "/_/backend";
+      const res = await fetch(`${apiUrl}/predict/nlp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
