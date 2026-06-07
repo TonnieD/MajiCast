@@ -1,56 +1,43 @@
-# MajiCast — Vercel Services Deployment Guide
+# MajiCast — Decoupled Deployment Guide
 
-This project is configured to deploy both the Next.js frontend and the FastAPI python backend entirely to Vercel using the **Vercel Services** pack. This allows both stacks to run under a single Vercel project, sharing the same domain name and configuration.
-
-## Architecture
-
-| Service | Stack | Route Prefix | Vercel Service Name |
-|---------|-------|--------------|---------------------|
-| **Frontend** | Next.js | `/` (root) | `web` |
-| **Backend** | FastAPI / Python | `/api-inference` | `api` |
-
-Both services are defined in the root-level [vercel.json](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/vercel.json) configuration:
-
-```json
-{
-  "experimentalServices": {
-    "web": {
-      "entrypoint": "web",
-      "routePrefix": "/"
-    },
-    "api": {
-      "entrypoint": "inference/main.py",
-      "routePrefix": "/api-inference"
-    }
-  }
-}
-```
+This project is configured for a decoupled deployment:
+* **Frontend (Next.js)**: Deployed to **Vercel** from the `web/` subdirectory.
+* **Backend (FastAPI)**: Deployed to **Render** from the `inference/` subdirectory.
 
 ---
 
-## Step 1 — Verify Model Pickles
+## Step 1 — Deploy the Backend on Render
 
-Ensure that the trained machine learning model files are copied into [inference/models/](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/inference/models/):
-- `environmental.pkl`
-- `nlp_pipeline.pkl`
-- `water_quality_pipeline.pkl`
-
-These model files are loaded during the FastAPI service lifespan. When deployed on Vercel, the `inference/models/` folder is bundled inside the serverless function.
+1. Create a **Render** account at **[render.com](https://render.com/)**.
+2. Click **New +** → **Blueprint** to import the repository (or click **Web Service** and choose Python runtime).
+3. If using Blueprint:
+   - Render will read [inference/render.yaml](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/inference/render.yaml) automatically.
+4. If setting up manually as a **Web Service**:
+   - **Repository Root Directory**: Set to `inference` (very important).
+   - **Environment**: `Python`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Python Version**: Render will automatically pick up Python `3.11` from the [inference/.python-version](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/inference/.python-version) file.
+5. Once deployed, note your service URL (e.g. `https://majicast-backend.onrender.com`).
+6. Test the liveness probe:
+   ```bash
+   curl https://<your-render-service>.onrender.com/health
+   # Expected: {"status":"ok"}
+   ```
 
 ---
 
-## Step 2 — Deploy on Vercel
+## Step 2 — Deploy the Frontend on Vercel
 
-1. Go to **[vercel.com](https://vercel.com)** → **Add New Project** → Import the **MajiCast** repository.
-2. **⚠️ CRITICAL — Select the "Services" Framework Preset:**
-   - In the Vercel project configuration screen, select **Services** as the Framework Preset (instead of Next.js or Other). This tells Vercel to read the root-level `vercel.json` configuration and deploy multiple stacks.
-3. Configure the following **Environment Variables** in Vercel:
+1. Import the repository into **[vercel.com](https://vercel.com/)**.
+2. Vercel will auto-detect the root-level [vercel.json](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/vercel.json) config, which configures Next.js inside the `web/` directory.
+3. In **Settings → Environment Variables**, add the following values:
 
    | Variable | Value | Description |
    |----------|-------|-------------|
-   | `NEXT_PUBLIC_INFERENCE_API_URL` | `/api-inference` | Relative URL used by the browser to call the FastAPI backend. |
-   | `INFERENCE_API_URL` | `/api-inference` | Relative URL used server-side by Next.js API routes. |
-   | `GEMINI_API_KEY` | *Your Gemini API key* | Used for citizen report NLP classification. |
+   | `NEXT_PUBLIC_INFERENCE_API_URL` | `https://<your-render-service>.onrender.com` | Public backend URL for browser direct calls. |
+   | `INFERENCE_API_URL` | `https://<your-render-service>.onrender.com` | Server-to-server Next.js backend proxy URL. |
+   | `GEMINI_API_KEY` | *Your Gemini API key* | Secret key for citizen report NLP classification. |
 
 4. Click **Deploy**.
 
@@ -58,55 +45,30 @@ These model files are loaded during the FastAPI service lifespan. When deployed 
 
 ## Step 3 — Verification
 
-Once live, verify that all aspects of the application are working correctly:
-- **Home / Dashboard (`/`)**: Home page loads successfully.
-- **Analysis View (`/analysis`)**: Renders the map and correctly reads `environmental.csv`.
-- **Manual Sensor Input (`/sensor`)**: Calling anomalies correctly makes a relative POST request to `/api-inference/predict/sensor`.
-- **Citizen Reports NLP (`/nlp`)**: The text analysis tool correctly processes reports using Gemini API.
+Once deployed, verify:
+* **Dashboard (`/`)**: Page loads and charts render.
+* **Map and Analysis (`/analysis`)**: Correctly retrieves processed datasets from Next.js serverless functions.
+* **Sensor Anomalies (`/sensor`)**: Makes calls to the Render service.
+* **Citizen Reports (`/nlp`)**: The classifier runs using Gemini API on the Vercel serverless functions.
 
 ---
 
-## Local Development (Vercel CLI)
+## Local Development
 
-You can run the full multi-service stack locally using the Vercel CLI. This matches the Vercel production environment routing exactly:
+You can run both services locally on separate ports:
 
-```bash
-# Install Vercel CLI if not already installed
-npm install -g vercel
+* **Backend**:
+  ```bash
+  cd inference
+  pip install -r requirements.txt
+  python -m uvicorn main:app --reload --port 8000
+  ```
+  API documentation is available at `http://localhost:8000/docs`.
 
-# Run the dev server (automatically routes both Next.js and Python FastAPI)
-vercel dev -L
-```
-
-Alternatively, you can run the services manually:
-1. Start Next.js dev server on port 3000: `cd web && npm run dev`
-2. Start FastAPI server on port 8000: `python -m uvicorn inference.main:app --reload`
-*(Note: If running manually, set `NEXT_PUBLIC_INFERENCE_API_URL=http://localhost:8000` in `web/.env.local`)*.
-
----
-
-## Previous Deployment (Streamlit Legacy App)
-
-The original Streamlit application is preserved in the [app/](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/app/) folder. This serves as a monolithic fallback interface.
-
-### Running Streamlit Locally
-
-1. Ensure you have the conda or virtual environment activated.
-2. Install the necessary dependencies (defined in the root [requirements.txt](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/requirements.txt)):
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Run the Streamlit application:
-   ```bash
-   streamlit run app/streamlit_app.py
-   ```
-
-### Deploying Streamlit to Streamlit Community Cloud
-
-1. Push your repository to GitHub.
-2. Log in to [Streamlit Community Cloud](https://share.streamlit.io/).
-3. Click **New app** and select the repository.
-4. Set the **Main file path** to `app/streamlit_app.py`.
-5. Under **Advanced settings**, optionally set any environment variables if required.
-6. Click **Deploy**. Streamlit will provision the environment using the root `requirements.txt` and load models/data directly from the bundled relative paths.
-
+* **Frontend**:
+  ```bash
+  cd web
+  npm install
+  npm run dev
+  ```
+  Frontend runs on `http://localhost:3000`. Configure `NEXT_PUBLIC_INFERENCE_API_URL=http://localhost:8000` in `web/.env.local`.

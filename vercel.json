@@ -1,12 +1,6 @@
 {
-  "experimentalServices": {
-    "web": {
-      "entrypoint": "web",
-      "routePrefix": "/"
-    },
-    "api": {
-      "entrypoint": "inference/main.py",
-      "routePrefix": "/api-inference"
-    }
-  }
+  "buildCommand": "cd web && npm run build",
+  "outputDirectory": "web/.next",
+  "installCommand": "cd web && npm install",
+  "framework": "nextjs"
 }

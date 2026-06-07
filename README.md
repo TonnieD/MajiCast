@@ -2,7 +2,7 @@
 
 MajiCast is an end-to-end, production-grade machine learning system designed to monitor and predict water quality and contamination risk in Kenya. By integrating chemical indicators, geospatial infrastructure logs, and remote sensing satellite data, MajiCast equips NGOs, local governments, and water authorities with proactive decision-making tools to prevent public health crises.
 
-The system has been refactored from a single-file Streamlit script into a high-performance decoupled architecture deployed entirely on **Vercel** using the new **Vercel Services** pack.
+The system has been refactored from a single-file Streamlit script into a high-performance decoupled architecture: the frontend is deployed to **Vercel** and the backend to **Render**.
 
 ---
 
@@ -17,15 +17,17 @@ MajiCast/
 │   ├── raw/                                   # WPDx, GEMS, and GEE source datasets
 │   └── processed/                             # Merged datasets (environmental.csv)
 ├── inference/                                 # FastAPI Inference Backend Service
-│   ├── models/                                # Model pickles (.pkl) bundled for Vercel
+│   ├── models/                                # Model pickles (.pkl)
 │   ├── main.py                                # FastAPI app endpoints & CORS middleware
+│   ├── render.yaml                            # Render Blueprint deployment config
+│   ├── .python-version                        # Python runtime version
 │   └── requirements.txt                       # Backend Python dependencies
 ├── notebooks/                                 # Jupyter analysis notebooks (CRISP-DM flow)
 │   ├── 01_data_extraction.ipynb              # Data ingestion and raw loads
 │   ├── 05_xgboost_model_training.ipynb       # XGBoost model development
 │   ├── 06_nlp_model_training.ipynb           # TF-IDF & text classifier training
 │   └── train_isolation_forest.ipynb          # Sensor anomaly detection
-├── vercel.json                                # Root Vercel Services configuration
+├── vercel.json                                # Root Vercel configuration (Next.js)
 └── web/                                       # Next.js Web Application
     ├── public/                                # Static assets (images, markers)
     └── src/
@@ -50,7 +52,7 @@ graph TD
     D1 --> E[Ensemble Risk Score Formulation]
     D2 --> E
     D3 --> E
-    E --> F[Vercel Services Deployment]
+    E --> F[Decoupled Cloud Deployment]
 ```
 
 ### 1. Data Ingestion & Sources
@@ -104,29 +106,25 @@ MajiCast trains and serves three distinct machine learning models designed to ad
 
 ---
 
-## 🚀 Deployment (Vercel Services)
+## 🚀 Deployment
 
-MajiCast is configured as a monorepo containing both the Next.js web application and the Python FastAPI backend. They are deployed together under the same Vercel domain using **Vercel Services**.
+The project is deployed using a decoupled infrastructure strategy:
+* **Frontend**: Next.js deployed on **Vercel** (`web/` directory).
+* **Backend**: FastAPI deployed on **Render** (`inference/` directory).
 
 ### 1. Vercel Configuration
-The root-level `vercel.json` maps incoming routing paths to independent services:
+The root `vercel.json` configures Vercel to build the Next.js frontend in the `web/` subdirectory:
 ```json
 {
-  "experimentalServices": {
-    "web": {
-      "entrypoint": "web",
-      "routePrefix": "/"
-    },
-    "api": {
-      "entrypoint": "inference/main.py",
-      "routePrefix": "/api-inference"
-    }
-  }
+  "buildCommand": "cd web && npm run build",
+  "outputDirectory": "web/.next",
+  "installCommand": "cd web && npm install",
+  "framework": "nextjs"
 }
 ```
 
 ### 2. Next.js Routing
-Next.js serverless functions communicate with the FastAPI backend through a unified route proxy ([route.ts](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/web/src/app/api/data/route.ts)) that dynamically prepends the host domain name:
+Next.js serverless functions proxy requests to the FastAPI backend using environment variables dynamically:
 ```typescript
 let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL;
 if (backendUrl.startsWith("/")) {
@@ -134,6 +132,7 @@ if (backendUrl.startsWith("/")) {
   backendUrl = `${host}${backendUrl}`;
 }
 ```
+
 
 ---
 

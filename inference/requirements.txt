@@ -1,13 +1,11 @@
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-joblib>=1.3.0
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+joblib==1.4.2
 scikit-learn==1.6.1
-# xgboost: pkl was serialized with an older version; 2.x/3.x load correctly
-# (cosmetic UserWarning is suppressed in main.py via warnings.filterwarnings)
-xgboost>=2.0.0
-nltk>=3.8.0
-pandas>=2.0.0
-numpy>=1.26.0
-imbalanced-learn>=0.12.0
-pydantic>=2.0.0
-python-multipart>=0.0.9
+xgboost==2.0.3
+nltk==3.8.1
+pandas==2.2.2
+numpy==1.26.4
+imbalanced-learn==0.12.3
+pydantic==2.7.1
+python-multipart==0.0.9
