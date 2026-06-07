@@ -63,9 +63,8 @@ def _ensure_nltk() -> None:
     """
     Initialise NLTK stopwords and lemmatizer on first use.
 
-    Downloads any missing resources automatically so this function is
-    fully self-contained — no external setup call required before using
-    clean_text() or clean_texts().
+    Downloads any missing resources automatically to /tmp/nltk_data
+    so this function is fully self-contained.
     """
     global _stop_words, _lemmatizer
     if _stop_words is not None:
@@ -75,12 +74,18 @@ def _ensure_nltk() -> None:
     from nltk.corpus import stopwords
     from nltk.stem import WordNetLemmatizer
 
-    # Download any missing resources into NLTK's default user data dir
+    # Ensure /tmp/nltk_data is in NLTK's data path
+    tmp_dir = "/tmp/nltk_data"
+    os.makedirs(tmp_dir, exist_ok=True)
+    if tmp_dir not in nltk.data.path:
+        nltk.data.path.append(tmp_dir)
+
+    # Download any missing resources into /tmp/nltk_data
     for resource_path, resource_name in _NLTK_RESOURCES:
         try:
             nltk.data.find(resource_path)
         except LookupError:
-            nltk.download(resource_name, quiet=True)
+            nltk.download(resource_name, download_dir=tmp_dir, quiet=True)
 
     _stop_words = set(stopwords.words("english"))
     _lemmatizer = WordNetLemmatizer()

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+nltk_data/
+tests/
+notebooks/
+*.ipynb

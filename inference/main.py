@@ -57,14 +57,7 @@ logger = logging.getLogger("majicast.inference")
 
 # ── paths ────────────────────────────────────────────────────────────────────
 ROOT_DIR = Path(__file__).parent.parent          # repo root
-# Try to write to local directory first. If it's read-only (like Vercel production), use /tmp/nltk_data
-local_nltk_dir = Path(__file__).parent / "nltk_data"
-try:
-    local_nltk_dir.mkdir(parents=True, exist_ok=True)
-    NLTK_DIR = local_nltk_dir
-except OSError:
-    NLTK_DIR = Path("/tmp") / "nltk_data"
-
+NLTK_DIR = Path("/tmp") / "nltk_data"
 
 # Try local inference/models/ first (for Vercel deployment), then fall back to app/models/
 LOCAL_MODELS_DIR = Path(__file__).parent / "models"
@@ -84,9 +77,10 @@ REQUIRED_NLTK_RESOURCES = [
 
 
 def ensure_nltk_resources() -> None:
-    """Download any missing NLTK resources into the inference/nltk_data/ dir."""
+    """Download any missing NLTK resources into the /tmp/nltk_data dir."""
     NLTK_DIR.mkdir(parents=True, exist_ok=True)
-    nltk.data.path.insert(0, str(NLTK_DIR))
+    if str(NLTK_DIR) not in nltk.data.path:
+        nltk.data.path.append(str(NLTK_DIR))
     os.environ["NLTK_DATA"] = str(NLTK_DIR)
 
     for resource_path, resource_name in REQUIRED_NLTK_RESOURCES:
