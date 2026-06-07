@@ -5,12 +5,6 @@
       "root": "web",
       "routePrefix": "/",
       "framework": "nextjs"
-    },
-    "backend": {
-      "root": "inference",
-      "routePrefix": "/_/backend",
-      "framework": "fastapi",
-      "entrypoint": "main.py"
     }
   }
 }

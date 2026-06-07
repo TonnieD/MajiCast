@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call inference service to generate predictions
-    let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "/_/backend";
+    let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
     if (backendUrl.startsWith("/")) {
       const host = process.env.VERCEL_URL 
         ? `https://${process.env.VERCEL_URL}` 
