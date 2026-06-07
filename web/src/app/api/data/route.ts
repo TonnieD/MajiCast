@@ -63,20 +63,20 @@ function parseCSV(text: string): Record<string, string>[] {
   return result;
 }
 
-// Helper to find the CSV file in various possible build/runtime paths
+// Resolve the CSV file path.
+// On Vercel, process.cwd() is the project root and outputFileTracingIncludes
+// ensures data/processed/environmental.csv is bundled with this serverless function.
+// Locally, process.cwd() is web/ so we also check the parent (repo root).
 function getCSVPath(): string {
-  const paths = [
-    path.join(process.cwd(), "data", "processed", "environmental.csv"),  // Docker volume mount
+  const candidates = [
+    path.join(process.cwd(), "data", "processed", "environmental.csv"),
     path.join(process.cwd(), "..", "data", "processed", "environmental.csv"),
-    path.join(process.cwd(), "web", "..", "data", "processed", "environmental.csv"),
   ];
 
-  for (const p of paths) {
-    if (fs.existsSync(p)) {
-      return p;
-    }
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
   }
-  throw new Error(`Could not locate environmental.csv. Searched:\n${paths.join("\n")}`);
+  throw new Error(`Could not locate environmental.csv. Searched:\n${candidates.join("\n")}`);
 }
 
 const REQUIRED_FEATURES = [
@@ -182,7 +182,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Call inference service to generate predictions
-    const backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
+    let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
+    if (backendUrl.startsWith("/")) {
+      const host = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : `http://${req.headers.get("host") || "localhost:3000"}`;
+      backendUrl = `${host}${backendUrl}`;
+    }
     
     // Structure rows for FastAPI model
     const inferenceRows = parsed.map(row => {

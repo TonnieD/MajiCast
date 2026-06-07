@@ -1,85 +1,112 @@
-# MajiCast — Deployment Guide
+# MajiCast — Vercel Services Deployment Guide
+
+This project is configured to deploy both the Next.js frontend and the FastAPI python backend entirely to Vercel using the **Vercel Services** pack. This allows both stacks to run under a single Vercel project, sharing the same domain name and configuration.
 
 ## Architecture
 
-| Service | Platform | URL pattern |
-|---------|----------|-------------|
-| Frontend (Next.js) | Vercel | `https://majicast.vercel.app` |
-| Backend (FastAPI) | Railway | `https://majicast-backend.up.railway.app` |
+| Service | Stack | Route Prefix | Vercel Service Name |
+|---------|-------|--------------|---------------------|
+| **Frontend** | Next.js | `/` (root) | `web` |
+| **Backend** | FastAPI / Python | `/api-inference` | `api` |
 
----
+Both services are defined in the root-level [vercel.json](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/vercel.json) configuration:
 
-## Step 1 — Deploy the Backend on Railway
-
-1. Go to **[railway.app](https://railway.app)** → **New Project** → **Deploy from GitHub repo**
-2. Select the **MajiCast** repository
-3. Railway auto-detects `railway.toml` and uses `Dockerfile.backend`
-4. Wait for the build to complete (~3–5 minutes, models are large)
-5. Go to **Settings → Networking → Generate Domain** to get a public URL
-6. Test the health endpoint:
-   ```
-   curl https://<your-service>.up.railway.app/health
-   # Expected: {"status":"ok"}
-   ```
-7. **Copy the Railway domain** — you'll need it in Step 2
-
----
-
-## Step 2 — Deploy the Frontend on Vercel
-
-1. Go to **[vercel.com](https://vercel.com)** → **Add New Project** → Import **MajiCast** from GitHub
-2. **⚠️ CRITICAL — Set Root Directory to `web`** before deploying:
-   - In the Vercel project configuration screen, expand **Root Directory**
-   - Type `web` and confirm
-3. Add the following **Environment Variables** in Vercel:
-
-   | Variable | Value |
-   |----------|-------|
-   | `NEXT_PUBLIC_INFERENCE_API_URL` | `https://<your-railway-domain>` |
-   | `INFERENCE_API_URL` | `https://<your-railway-domain>` |
-   | `GEMINI_API_KEY` | Your Gemini API key |
-
-4. Click **Deploy**
-5. Once live, test:
-   - `/` — Home page loads
-   - `/analysis` — Map and insights populated with data
-   - `/sensor` — Sensor form calls backend successfully
-
----
-
-## Step 3 — Update Backend CORS (after Vercel URL is known)
-
-Once Vercel assigns your production URL (e.g. `https://majicast.vercel.app`), update `inference/main.py`:
-
-```python
-allow_origins=[
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://majicast.vercel.app",   # ← update with your actual Vercel URL
-    ...
-],
+```json
+{
+  "experimentalServices": {
+    "web": {
+      "entrypoint": "web",
+      "routePrefix": "/"
+    },
+    "api": {
+      "entrypoint": "inference/main.py",
+      "routePrefix": "/api-inference"
+    }
+  }
+}
 ```
 
-The `allow_origin_regex` already covers all `*.vercel.app` preview deployments.
+---
+
+## Step 1 — Verify Model Pickles
+
+Ensure that the trained machine learning model files are copied into [inference/models/](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/inference/models/):
+- `environmental.pkl`
+- `nlp_pipeline.pkl`
+- `water_quality_pipeline.pkl`
+
+These model files are loaded during the FastAPI service lifespan. When deployed on Vercel, the `inference/models/` folder is bundled inside the serverless function.
 
 ---
 
-## Auto-deploy on push
+## Step 2 — Deploy on Vercel
 
-Both services auto-deploy when you push to the connected GitHub branch:
-- **Vercel** → rebuilds frontend (Next.js)
-- **Railway** → rebuilds backend (Docker)
+1. Go to **[vercel.com](https://vercel.com)** → **Add New Project** → Import the **MajiCast** repository.
+2. **⚠️ CRITICAL — Select the "Services" Framework Preset:**
+   - In the Vercel project configuration screen, select **Services** as the Framework Preset (instead of Next.js or Other). This tells Vercel to read the root-level `vercel.json` configuration and deploy multiple stacks.
+3. Configure the following **Environment Variables** in Vercel:
+
+   | Variable | Value | Description |
+   |----------|-------|-------------|
+   | `NEXT_PUBLIC_INFERENCE_API_URL` | `/api-inference` | Relative URL used by the browser to call the FastAPI backend. |
+   | `INFERENCE_API_URL` | `/api-inference` | Relative URL used server-side by Next.js API routes. |
+   | `GEMINI_API_KEY` | *Your Gemini API key* | Used for citizen report NLP classification. |
+
+4. Click **Deploy**.
 
 ---
 
-## Local Docker (no change)
+## Step 3 — Verification
 
-Your existing `docker compose up --build` workflow still works as before.
-The only difference is the `HOST_IP` variable which controls the LAN-accessible URL.
+Once live, verify that all aspects of the application are working correctly:
+- **Home / Dashboard (`/`)**: Home page loads successfully.
+- **Analysis View (`/analysis`)**: Renders the map and correctly reads `environmental.csv`.
+- **Manual Sensor Input (`/sensor`)**: Calling anomalies correctly makes a relative POST request to `/api-inference/predict/sensor`.
+- **Citizen Reports NLP (`/nlp`)**: The text analysis tool correctly processes reports using Gemini API.
+
+---
+
+## Local Development (Vercel CLI)
+
+You can run the full multi-service stack locally using the Vercel CLI. This matches the Vercel production environment routing exactly:
 
 ```bash
-# Copy .env.example and fill in your values
-cp .env.example .env
-# Edit HOST_IP to your machine's LAN IP
-docker compose up --build
+# Install Vercel CLI if not already installed
+npm install -g vercel
+
+# Run the dev server (automatically routes both Next.js and Python FastAPI)
+vercel dev -L
 ```
+
+Alternatively, you can run the services manually:
+1. Start Next.js dev server on port 3000: `cd web && npm run dev`
+2. Start FastAPI server on port 8000: `python -m uvicorn inference.main:app --reload`
+*(Note: If running manually, set `NEXT_PUBLIC_INFERENCE_API_URL=http://localhost:8000` in `web/.env.local`)*.
+
+---
+
+## Previous Deployment (Streamlit Legacy App)
+
+The original Streamlit application is preserved in the [app/](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/app/) folder. This serves as a monolithic fallback interface.
+
+### Running Streamlit Locally
+
+1. Ensure you have the conda or virtual environment activated.
+2. Install the necessary dependencies (defined in the root [requirements.txt](file:///c:/Users/ngang/OneDrive/Desktop/Projects/Data%20Science/MajiCast/requirements.txt)):
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the Streamlit application:
+   ```bash
+   streamlit run app/streamlit_app.py
+   ```
+
+### Deploying Streamlit to Streamlit Community Cloud
+
+1. Push your repository to GitHub.
+2. Log in to [Streamlit Community Cloud](https://share.streamlit.io/).
+3. Click **New app** and select the repository.
+4. Set the **Main file path** to `app/streamlit_app.py`.
+5. Under **Advanced settings**, optionally set any environment variables if required.
+6. Click **Deploy**. Streamlit will provision the environment using the root `requirements.txt` and load models/data directly from the bundled relative paths.
+

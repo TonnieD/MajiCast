@@ -57,8 +57,21 @@ logger = logging.getLogger("majicast.inference")
 
 # ── paths ────────────────────────────────────────────────────────────────────
 ROOT_DIR = Path(__file__).parent.parent          # repo root
-MODELS_DIR = ROOT_DIR / "app" / "models"         # app/models/ — used by Streamlit
-NLTK_DIR = Path(__file__).parent / "nltk_data"   # inference/nltk_data/
+# Try to write to local directory first. If it's read-only (like Vercel production), use /tmp/nltk_data
+local_nltk_dir = Path(__file__).parent / "nltk_data"
+try:
+    local_nltk_dir.mkdir(parents=True, exist_ok=True)
+    NLTK_DIR = local_nltk_dir
+except OSError:
+    NLTK_DIR = Path("/tmp") / "nltk_data"
+
+
+# Try local inference/models/ first (for Vercel deployment), then fall back to app/models/
+LOCAL_MODELS_DIR = Path(__file__).parent / "models"
+if LOCAL_MODELS_DIR.exists():
+    MODELS_DIR = LOCAL_MODELS_DIR
+else:
+    MODELS_DIR = ROOT_DIR / "app" / "models"         # app/models/ — used by Streamlit
 
 # ── NLTK setup ───────────────────────────────────────────────────────────────
 REQUIRED_NLTK_RESOURCES = [
