@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 
 // Leaflet must be loaded client-side only
-const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), {
+const RiskMap = dynamic(() => import("@/components/map/RiskMap"), {
   ssr: false,
   loading: () => (
     <div className="h-full flex items-center justify-center bg-parchment-200 rounded-panel text-forest-600 text-sm">
@@ -166,7 +166,7 @@ export default function MapClient() {
               Loading data…
             </div>
           ) : (
-            <LeafletMap points={displayed} riskColors={RISK_COLORS} />
+            <RiskMap points={displayed} riskColors={RISK_COLORS} />
           )}
         </div>
       </div>

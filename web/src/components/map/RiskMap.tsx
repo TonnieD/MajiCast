@@ -28,7 +28,7 @@ interface Props {
   riskColors: Record<number, string>;
 }
 
-export default function LeafletMap({ points, riskColors }: Props) {
+export default function RiskMap({ points, riskColors }: Props) {
   // Fix Leaflet default icon path in Next.js bundling context
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
