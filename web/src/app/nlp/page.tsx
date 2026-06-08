@@ -12,9 +12,10 @@ const RAIN_OPTIONS    = ["", "No recent rain", "Light rain", "Heavy rain"];
 const ACTIVITY_OPTIONS= ["", "Residential", "Industrial", "Agricultural", "None"];
 const INFRA_OPTIONS   = ["", "Good condition", "Needs repair", "Unknown"];
 
-type Result = { label: "Safe" | "Unsafe"; confidence: number } | null;
+type Result = { label: "Safe" | "Unsafe"; confidence: number; reasoning?: string } | null;
 
 export default function NLPPage() {
+  const [mode,         setMode]         = useState<"local" | "gemini">("local");
   const [userText,     setUserText]     = useState("");
   const [color,        setColor]        = useState("");
   const [clarity,      setClarity]      = useState("");
@@ -48,7 +49,8 @@ export default function NLPPage() {
 
     setLoading(true); setResult(null); setError(null);
     try {
-      const res = await fetch("/api/predict/nlp", {
+      const endpoint = mode === "local" ? "/api/predict/nlp" : "/api/predict/gemini";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -77,6 +79,32 @@ export default function NLPPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
+
+        {/* Prediction Engine Selector */}
+        <div className="panel">
+          <label className="field-label">Prediction Engine</label>
+          <div className="tab-bar">
+            <button
+              type="button"
+              onClick={() => { setMode("local"); setResult(null); setError(null); }}
+              className={`tab-btn ${mode === "local" ? "active" : ""}`}
+            >
+              Local NLP Model
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode("gemini"); setResult(null); setError(null); }}
+              className={`tab-btn ${mode === "gemini" ? "active" : ""}`}
+            >
+              Gemini Analysis
+            </button>
+          </div>
+          <p className="text-xs text-forest-600">
+            {mode === "local"
+              ? "Fast prediction using a trained ML model. May have reduced accuracy on edge cases."
+              : "AI-powered analysis using Google Gemini. More accurate but subject to API rate limits."}
+          </p>
+        </div>
 
         {/* Description */}
         <div className="panel">
@@ -175,6 +203,11 @@ export default function NLPPage() {
                 <p className="text-sm mt-1 opacity-80">
                   Confidence: {(result.confidence * 100).toFixed(1)}%
                 </p>
+                {result.reasoning && (
+                  <p className="text-sm mt-3 pt-3 border-t border-forest-900/10">
+                    {result.reasoning}
+                  </p>
+                )}
               </div>
               <span className={`badge-base flex-shrink-0 ${result.label === "Safe" ? "badge-safe" : "badge-high"}`}>
                 {result.label}

@@ -131,7 +131,7 @@ Vercel hosts the Next.js frontend, configured via the root [vercel.json](file://
 Configure the project in the Vercel Dashboard under **Settings** → **General**:
 * **Framework Preset**: `Other` (or `Next.js`)
 * **Root Directory**: repo root (leave empty)
-* **Environment Variables**: Add `NEXT_PUBLIC_INFERENCE_API_URL` pointing to your Render backend instance (e.g., `https://majicast-inference.onrender.com`).
+* **Environment Variables**: Add `NEXT_PUBLIC_INFERENCE_API_URL` pointing to your Render backend instance (e.g., `https://majicast-inference.onrender.com`) and `GEMINI_API_KEY` with your Google Gemini API key.
 
 ### 2. Next.js Routing & API Integration
 The frontend accesses the backend via absolute URLs defined by the environment variable:
@@ -145,10 +145,26 @@ if (backendUrl.startsWith("/")) {
   const host = process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}` 
     : `http://${req.headers.get("host") || "localhost:3000"}`;
-  backendUrl = `${host}${backendUrl}`;
+    backendUrl = `${host}${backendUrl}`;
+  }
 }
 ```
 
+### Inference Service — Cold Starts and Keep-Alive
+
+The inference service is hosted on Render's free tier, which spins down containers after 15 minutes of inactivity. To prevent cold starts during active hours, a cron job is configured on cron-job.org to ping the /health endpoint every 14 minutes.
+
+Setup instructions for anyone forking the project:
+1. Create a free account at cron-job.org
+2. Create a new cron job with the URL set to https://majicast.onrender.com/health
+3. Set the execution schedule to every 14 minutes
+4. Enable the job
+
+Note that this only prevents spin-down during periods when the cron job is active. The first request after a full server restart or extended downtime will still incur a cold start of 30-90 seconds while the three ML models load into memory.
+
+### NLP Prediction — Local Model vs Gemini
+
+The NLP water report classifier was trained on synthetic data and may produce inaccurate predictions on real-world observations. A Gemini-powered analysis option is available on the NLP page as a more accurate alternative. The Gemini integration uses a free tier API key and is subject to rate limits. The GEMINI_API_KEY environment variable must be set in both local .env and the Vercel dashboard for this feature to function.
 
 ---
 
