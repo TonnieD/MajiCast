@@ -15,7 +15,7 @@ const INFRA_OPTIONS   = ["", "Good condition", "Needs repair", "Unknown"];
 type Result = { label: "Safe" | "Unsafe"; confidence: number; reasoning?: string } | null;
 
 export default function NLPPage() {
-  const [mode,         setMode]         = useState<"local" | "gemini">("local");
+  const [mode,         setMode]         = useState<"local" | "gemini">("gemini");
   const [userText,     setUserText]     = useState("");
   const [color,        setColor]        = useState("");
   const [clarity,      setClarity]      = useState("");
