@@ -155,8 +155,8 @@ export default function NLPPage() {
         {/* Error */}
         {error && (
           <div className="result-unsafe">
-            <p className="font-semibold text-[#7a1f1f]">Error</p>
-            <p className="text-sm mt-1 text-[#7a1f1f]">{error}</p>
+            <p className="font-semibold text-[#FF0000]">Error</p>
+            <p className="text-sm mt-1 text-[#FF0000]">{error}</p>
           </div>
         )}
 
@@ -166,11 +166,11 @@ export default function NLPPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold tracking-widest uppercase mb-1"
-                   style={{ color: result.label === "Safe" ? "#2d6a4f" : "#7a1f1f" }}>
+                   style={{ color: result.label === "Safe" ? "#00FF00" : "#FF0000" }}>
                   Classification Result
                 </p>
                 <p className="text-2xl font-display font-bold"
-                   style={{ color: result.label === "Safe" ? "#2d6a4f" : "#7a1f1f" }}>
+                   style={{ color: result.label === "Safe" ? "#00FF00" : "#FF0000" }}>
                   Water is predicted to be {result.label.toUpperCase()}
                 </p>
                 <p className="text-sm mt-1 opacity-80">

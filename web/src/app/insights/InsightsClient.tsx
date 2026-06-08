@@ -18,10 +18,10 @@ const RISK_LABELS: Record<number, string> = {
 };
 
 const RISK_COLORS: Record<number, string> = {
-  0: "#2d6a4f",
-  1: "#c4a35a",
-  2: "#8b5e3c",
-  3: "#7a1f1f",
+  0: "#00FF00",
+  1: "#FFFF00",
+  2: "#FFA500",
+  3: "#FF0000",
 };
 
 const ALERTS = [

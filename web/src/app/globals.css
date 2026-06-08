@@ -27,10 +27,10 @@
   --color-parchment-200: #ede4d2;
 
   /* Risk tiers */
-  --color-risk-safe:   #2d6a4f;
-  --color-risk-low:    #c4a35a;
-  --color-risk-medium: #8b5e3c;
-  --color-risk-high:   #7a1f1f;
+  --color-risk-safe:   #00FF00;
+  --color-risk-low:    #FFFF00;
+  --color-risk-medium: #FFA500;
+  --color-risk-high:   #FF0000;
 }
 
 /* ── Base styles ─────────────────────────────────────────────────────────── */

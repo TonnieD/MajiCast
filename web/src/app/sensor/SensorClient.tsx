@@ -121,7 +121,7 @@ export default function SensorClient() {
             </button>
 
             {error && (
-              <div className="result-unsafe text-sm text-[#7a1f1f]">
+              <div className="result-unsafe text-sm text-[#FF0000]">
                 <strong>Error:</strong> {error}
               </div>
             )}
@@ -148,11 +148,11 @@ export default function SensorClient() {
             {result && (
               <div id="sensor-result" className={safe ? "result-safe" : "result-unsafe"}>
                 <p className="text-xs font-semibold tracking-widest uppercase mb-1"
-                   style={{ color: safe ? "#2d6a4f" : "#7a1f1f" }}>
+                   style={{ color: safe ? "#00FF00" : "#FF0000" }}>
                   Anomaly Detection Result
                 </p>
                 <p className="text-2xl font-display font-bold mb-2"
-                   style={{ color: safe ? "#2d6a4f" : "#7a1f1f" }}>
+                   style={{ color: safe ? "#00FF00" : "#FF0000" }}>
                   {result.verdict}
                 </p>
                 <div className="flex gap-3 items-center">
@@ -161,11 +161,11 @@ export default function SensorClient() {
                       className="h-full rounded-lg transition-all duration-500"
                       style={{
                         width: `${result.risk_score * 100}%`,
-                        background: result.risk_score > 0.5 ? "#7a1f1f" : "#2d6a4f",
+                        background: result.risk_score > 0.5 ? "#FF0000" : "#00FF00",
                       }}
                     />
                   </div>
-                  <span className="text-sm font-bold" style={{ color: safe ? "#2d6a4f" : "#7a1f1f" }}>
+                  <span className="text-sm font-bold" style={{ color: safe ? "#00FF00" : "#FF0000" }}>
                     {(result.risk_score * 100).toFixed(1)}%
                   </span>
                 </div>

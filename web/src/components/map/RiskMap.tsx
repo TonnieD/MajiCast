@@ -25,10 +25,10 @@ const RISK_LABELS: Record<number, string> = {
 };
 
 const RISK_COLORS: Record<number, string> = {
-  0: "#2d6a4f",
-  1: "#c4a35a",
-  2: "#8b5e3c",
-  3: "#7a1f1f",
+  0: "#00FF00",
+  1: "#FFFF00",
+  2: "#FFA500",
+  3: "#FF0000",
 };
 
 // Kenya center
@@ -183,7 +183,7 @@ export default function RiskMap() {
               {displayed.map((point, i) => {
                 if (typeof point.latitude !== "number" || typeof point.longitude !== "number") return null;
                 const tier  = point.predicted_risk ?? 0;
-                const color = RISK_COLORS[tier] ?? "#2d6a4f";
+                const color = RISK_COLORS[tier] ?? "#00FF00";
                 const qualityScore = point.risk_score != null
                   ? typeof point.risk_score === "number" && point.risk_score <= 1
                     ? (point.risk_score * 100).toFixed(1)
