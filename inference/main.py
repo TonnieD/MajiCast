@@ -35,12 +35,22 @@ warnings.filterwarnings(
 )
 
 # ── CRITICAL: register shims BEFORE any joblib.load() ──────────────────────
+_INFERENCE_DIR = str(Path(__file__).parent.resolve())
+if _INFERENCE_DIR not in sys.path:
+    sys.path.insert(0, _INFERENCE_DIR)
+
 from models import (
     WaterQualityPipeline,
     clean_text,          # used in /predict/nlp handler
     register_for_pickle,
 )
 register_for_pickle()
+
+from relevance import (
+    WATER_RELEVANCE_MIN_MATCHES,
+    WATER_RELEVANCE_VOCABULARY,
+    check_water_relevance,
+)
 
 # ── third-party ─────────────────────────────────────────────────────────────
 import joblib
@@ -212,8 +222,12 @@ class NLPRequest(BaseModel):
 
 
 class NLPResponse(BaseModel):
-    label: str       # "Safe" | "Unsafe"
+    label: str       # "Safe" | "Unsafe" | "Insufficient information"
+    verdict: str     # "Safe" | "Unsafe" | "Insufficient information"
+    relevant: bool   # True if input meets water relevance criteria
     confidence: float  # 0.0 – 1.0
+    reason: str      # Brief explanation or guidance
+    reasoning: str   # Backward-compatible alias for reason
 
 
 class EnvironmentalRow(BaseModel):
@@ -294,19 +308,37 @@ async def health() -> Dict[str, str]:
 @app.post("/predict/nlp", response_model=NLPResponse, tags=["Prediction"])
 async def predict_nlp(body: NLPRequest) -> NLPResponse:
     """
-    Classify free-form water quality text as Safe or Unsafe.
+    Classify free-form water quality text as Safe or Unsafe with a relevance gate.
 
-    Applies the same clean_text() preprocessing used during NLP model training
-    before passing to the sklearn TF-IDF + classifier pipeline.
+    Applies the relevance check first. If insufficient water-quality terms are present,
+    returns 'Insufficient information' without running through the classifier.
+    Otherwise applies clean_text() and passes to the TF-IDF + classifier pipeline.
     """
     if _nlp_pipeline is None:
         raise HTTPException(status_code=503, detail="NLP model not loaded.")
 
+    # 1. Relevance gate
+    is_relevant, match_count, matched_terms = check_water_relevance(body.text)
+    if not is_relevant:
+        return NLPResponse(
+            label="Insufficient information",
+            verdict="Insufficient information",
+            relevant=False,
+            confidence=0.0,
+            reason="Input does not contain sufficient water-quality observations. Try describing the water's colour, smell, clarity, or taste.",
+            reasoning="Input does not contain sufficient water-quality observations. Try describing the water's colour, smell, clarity, or taste.",
+        )
+
+    # 2. Preprocessing & Classification
     cleaned = clean_text(body.text)
     if not cleaned.strip():
-        raise HTTPException(
-            status_code=422,
-            detail="Text reduced to empty string after cleaning. Please provide more detail.",
+        return NLPResponse(
+            label="Insufficient information",
+            verdict="Insufficient information",
+            relevant=False,
+            confidence=0.0,
+            reason="Observation contained insufficient descriptive content after text preprocessing.",
+            reasoning="Observation contained insufficient descriptive content after text preprocessing.",
         )
 
     prediction: int = int(_nlp_pipeline.predict([cleaned])[0])
@@ -314,7 +346,17 @@ async def predict_nlp(body: NLPRequest) -> NLPResponse:
     confidence: float = float(proba[prediction])
 
     label_map = {0: "Safe", 1: "Unsafe"}
-    return NLPResponse(label=label_map[prediction], confidence=round(confidence, 4))
+    verdict = label_map[prediction]
+    reason_text = f"Classified as {verdict} based on local NLP model evaluation of {match_count} water observation term(s)."
+
+    return NLPResponse(
+        label=verdict,
+        verdict=verdict,
+        relevant=True,
+        confidence=round(confidence, 4),
+        reason=reason_text,
+        reasoning=reason_text,
+    )
 
 
 @app.post("/predict/environmental", response_model=EnvironmentalResponse, tags=["Prediction"])

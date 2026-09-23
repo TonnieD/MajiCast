@@ -90,10 +90,10 @@ export default function RiskMap() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 p-4 h-[calc(100vh-180px)] min-h-[600px]">
+      <div className="flex flex-col md:flex-row gap-4 p-4 h-[calc(100vh-180px)] min-h-150">
 
         {/* ── Sidebar controls ─────────────────────────────────────── */}
-        <aside className="md:w-72 flex-shrink-0 space-y-4 overflow-y-auto">
+        <aside className="md:w-72 shrink-0 space-y-4 overflow-y-auto">
 
           {/* Filters */}
           <div className="panel space-y-4">
@@ -154,7 +154,7 @@ export default function RiskMap() {
             <h2 className="font-display font-bold text-forest-900 mb-3">Legend</h2>
             {Object.entries(RISK_LABELS).map(([tier, label]) => (
               <div key={tier} className="flex items-center gap-2.5 py-1.5">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: RISK_COLORS[Number(tier)] }} />
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ background: RISK_COLORS[Number(tier)] }} />
                 <span className="text-xs text-forest-800">{label}</span>
               </div>
             ))}
@@ -162,7 +162,7 @@ export default function RiskMap() {
         </aside>
 
         {/* ── Map ──────────────────────────────────────────────────── */}
-        <div className="flex-1 rounded-panel overflow-hidden shadow-panel min-h-[400px]">
+        <div className="flex-1 rounded-panel overflow-hidden shadow-panel min-h-100">
           {loading ? (
             <div className="h-full flex items-center justify-center bg-parchment-200 text-forest-600">
               Loading data…
@@ -174,10 +174,10 @@ export default function RiskMap() {
               style={{ height: "100%", width: "100%" }}
               className="leaflet-container"
             >
-              {/* CartoDB Positron — clean, light tile layer */}
+              {/* OpenStreetMap tile layer */}
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
               {displayed.map((point, i) => {
@@ -204,7 +204,7 @@ export default function RiskMap() {
                     }}
                   >
                     <Popup>
-                      <div className="text-xs min-w-[160px]">
+                      <div className="text-xs min-w-40">
                         <p className="font-bold text-sm text-forest-900 mb-1">
                           {point.water_source_clean ?? "Water Point"}
                         </p>

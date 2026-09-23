@@ -121,7 +121,7 @@ export default function SensorClient() {
             </button>
 
             {error && (
-              <div className="result-unsafe text-sm text-[#FF0000]">
+              <div className="result-unsafe text-sm text-risk-high">
                 <strong>Error:</strong> {error}
               </div>
             )}
@@ -138,8 +138,7 @@ export default function SensorClient() {
                     <PolarAngleAxis dataKey="metric" tick={{ fill: "#1a3a2a", fontSize: 12 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                     <Radar dataKey="value" stroke="#2d6a4f" fill="#2d6a4f" fillOpacity={0.2} />
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
+                    <Tooltip formatter={(v: string | number | readonly (string | number)[]) => `${Number(v).toFixed(1)}%`} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>

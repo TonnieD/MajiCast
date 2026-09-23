@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
+
   try {
     const { text } = await req.json();
 
@@ -8,7 +10,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ detail: "Invalid text input" }, { status: 400 });
     }
 
-    let backendUrl = process.env.INFERENCE_API_URL || process.env.NEXT_PUBLIC_INFERENCE_API_URL || "http://localhost:8000";
     if (backendUrl.startsWith("/")) {
       const host = process.env.VERCEL_URL 
         ? `https://${process.env.VERCEL_URL}` 
@@ -32,8 +33,14 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in local NLP prediction route:", error);
-    return NextResponse.json({ detail: "Internal Server Error" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        detail: `Could not connect to the Local NLP inference service at ${backendUrl}. Ensure the FastAPI server is running (e.g. 'uvicorn main:app --port 8000'). [${msg}]`,
+      },
+      { status: 503 }
+    );
   }
 }

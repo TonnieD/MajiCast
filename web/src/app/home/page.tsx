@@ -46,7 +46,7 @@ export default function HomePage() {
         {/* ── About ───────────────────────────────────────────────────── */}
         <section aria-labelledby="about-heading">
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-[4/3]">
+            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-4/3">
               <Image
                 src="/images/about.jpeg"
                 alt="Water point in Kenya"
@@ -104,7 +104,7 @@ export default function HomePage() {
                 for all.
               </p>
             </div>
-            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-[4/3]">
+            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-4/3">
               <Image
                 src="/images/mission.jpeg"
                 alt="Mission — safe water access"
@@ -148,7 +148,7 @@ export default function HomePage() {
         {/* ── Vision ──────────────────────────────────────────────────── */}
         <section aria-labelledby="vision-heading">
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-[4/3]">
+            <div className="relative rounded-panel overflow-hidden shadow-warm-lg aspect-4/3">
               <Image
                 src="/images/vision.jpeg"
                 alt="Vision — protecting water for future generations"

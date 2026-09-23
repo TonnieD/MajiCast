@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",
@@ -22,7 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^9",
+    "eslint": "^8.57.1",
     "eslint-config-next": "14.2.20",
     "tailwindcss": "^4",
     "typescript": "^5"

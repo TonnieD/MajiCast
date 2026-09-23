@@ -36,7 +36,7 @@ export default function Sidebar() {
             `}
           >
             <span
-              className={`w-2 h-2 rounded-full flex-shrink-0 ${active ? "bg-earth-400" : "bg-forest-600"}`}
+              className={`w-2 h-2 rounded-full shrink-0 ${active ? "bg-earth-400" : "bg-forest-600"}`}
             />
             {label}
           </Link>
@@ -51,7 +51,7 @@ export default function Sidebar() {
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 flex-col bg-forest-900 z-40">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-forest-800">
-          <div className="w-8 h-8 rounded-lg bg-earth-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-earth-400 flex items-center justify-center shrink-0">
             <span className="text-forest-900 font-bold text-base leading-none">M</span>
           </div>
           <div>

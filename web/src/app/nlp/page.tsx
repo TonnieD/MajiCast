@@ -12,7 +12,14 @@ const RAIN_OPTIONS    = ["", "No recent rain", "Light rain", "Heavy rain"];
 const ACTIVITY_OPTIONS= ["", "Residential", "Industrial", "Agricultural", "None"];
 const INFRA_OPTIONS   = ["", "Good condition", "Needs repair", "Unknown"];
 
-type Result = { label: "Safe" | "Unsafe"; confidence: number; reasoning?: string } | null;
+type Result = {
+  label: "Safe" | "Unsafe" | "Insufficient information";
+  verdict?: "Safe" | "Unsafe" | "Insufficient information";
+  relevant?: boolean;
+  confidence: number;
+  reason?: string;
+  reasoning?: string;
+} | null;
 
 export default function NLPPage() {
   const [mode,         setMode]         = useState<"local" | "gemini">("gemini");
@@ -182,35 +189,79 @@ export default function NLPPage() {
         {/* Error */}
         {error && (
           <div className="result-unsafe">
-            <p className="font-semibold text-[#FF0000]">Error</p>
-            <p className="text-sm mt-1 text-[#FF0000]">{error}</p>
+            <p className="font-semibold text-risk-high">Error</p>
+            <p className="text-sm mt-1 text-risk-high">{error}</p>
           </div>
         )}
 
         {/* Result */}
         {result && (
-          <div id="nlp-result" className={result.label === "Safe" ? "result-safe" : "result-unsafe"}>
+          <div
+            id="nlp-result"
+            className={
+              result.label === "Insufficient information"
+                ? "result-insufficient"
+                : result.label === "Safe"
+                ? "result-safe"
+                : "result-unsafe"
+            }
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-widest uppercase mb-1"
-                   style={{ color: result.label === "Safe" ? "#00FF00" : "#FF0000" }}>
-                  Classification Result
+                <p
+                  className="text-xs font-semibold tracking-widest uppercase mb-1"
+                  style={{
+                    color:
+                      result.label === "Insufficient information"
+                        ? "#8b6a1e"
+                        : result.label === "Safe"
+                        ? "#2d6a4f"
+                        : "#7a1f1f",
+                  }}
+                >
+                  {result.label === "Insufficient information" ? "Classification Notice" : "Classification Result"}
                 </p>
-                <p className="text-2xl font-display font-bold"
-                   style={{ color: result.label === "Safe" ? "#00FF00" : "#FF0000" }}>
-                  Water is predicted to be {result.label.toUpperCase()}
+                <p
+                  className="text-2xl font-display font-bold"
+                  style={{
+                    color:
+                      result.label === "Insufficient information"
+                        ? "#8b6a1e"
+                        : result.label === "Safe"
+                        ? "#2d6a4f"
+                        : "#7a1f1f",
+                  }}
+                >
+                  {result.label === "Insufficient information"
+                    ? "Insufficient Information"
+                    : `Water is predicted to be ${result.label.toUpperCase()}`}
                 </p>
-                <p className="text-sm mt-1 opacity-80">
-                  Confidence: {(result.confidence * 100).toFixed(1)}%
-                </p>
-                {result.reasoning && (
-                  <p className="text-sm mt-3 pt-3 border-t border-forest-900/10">
-                    {result.reasoning}
+                {result.label !== "Insufficient information" && (
+                  <p className="text-sm mt-1 opacity-80">
+                    Confidence: {(result.confidence * 100).toFixed(1)}%
                   </p>
                 )}
+                {(result.reason || result.reasoning) && (
+                  <p className="text-sm mt-3 pt-3 border-t border-forest-900/10">
+                    {result.reason || result.reasoning}
+                  </p>
+                )}
+                {result.label === "Insufficient information" && (
+                  <div className="mt-3 pt-3 border-t border-forest-900/10 text-xs text-forest-700">
+                    <span className="font-semibold text-forest-800">💡 Hint:</span> Try describing the water&apos;s colour, smell, clarity, or taste.
+                  </div>
+                )}
               </div>
-              <span className={`badge-base flex-shrink-0 ${result.label === "Safe" ? "badge-safe" : "badge-high"}`}>
-                {result.label}
+              <span
+                className={`badge-base shrink-0 ${
+                  result.label === "Insufficient information"
+                    ? "badge-low"
+                    : result.label === "Safe"
+                    ? "badge-safe"
+                    : "badge-high"
+                }`}
+              >
+                {result.label === "Insufficient information" ? "Insufficient Info" : result.label}
               </span>
             </div>
           </div>

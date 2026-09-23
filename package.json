@@ -1,0 +1,11 @@
+{
+  "name": "majicast-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "npm run --prefix web lint",
+    "lint:fix": "npm run --prefix web lint:fix",
+    "dev": "npm run --prefix web dev",
+    "build": "npm run --prefix web build"
+  }
+}

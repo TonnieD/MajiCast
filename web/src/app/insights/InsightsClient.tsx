@@ -154,8 +154,7 @@ export default function InsightsClient() {
                               <Cell key={entry.name} fill={RISK_COLORS[entry.tier]} />
                             ))}
                           </Pie>
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                          <Tooltip formatter={(v: any) => [`${v} points`, ""]} />
+                          <Tooltip formatter={(v: string | number | readonly (string | number)[]) => [`${v} points`, ""]} />
                           <Legend />
                         </PieChart>
                       </ResponsiveContainer>

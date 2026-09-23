@@ -157,6 +157,12 @@ select.field-input { cursor: pointer; }
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
 }
+.result-insufficient {
+  background: linear-gradient(135deg, #fdf8eb, #fffdf8);
+  border: 1.5px solid #e8d5a0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .site-footer {

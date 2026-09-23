@@ -14,14 +14,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ detail: "Gemini API key is not configured on the server." }, { status: 500 });
     }
 
-    const systemPrompt = `You are a water safety expert. Based on the observation description provided, 
-assess whether the water is safe or unsafe for human consumption. 
-Consider factors like color, clarity, odor, nearby activities, and infrastructure condition.
+    const systemPrompt = `You are a water safety and quality assessment expert.
+Analyze the user's observation description (in English, Kiswahili, or Sheng) to assess water safety for human consumption.
+
+Classification Rules:
+1. RELEVANCE CHECK:
+   - Check if the input contains water-quality observations (e.g. water appearance, color/rangi, clarity, odor/harufu, taste/ladha, turbidity, contamination, source condition, or infrastructure).
+   - If the input is empty, gibberish, off-topic, or contains NO water-quality information (e.g. "This is a car", "hello world", "nani ako hapo"), DO NOT default to "Unsafe". You MUST set:
+     "relevant": false,
+     "verdict": "Insufficient information",
+     "confidence": 0.0,
+     "reason": "Input does not contain water-quality or water-source observations."
+
+2. RELEVANT ASSESSMENTS:
+   - If the input IS relevant (describes water):
+     - Set "relevant": true.
+     - If the description clearly indicates clean/safe drinking water, set "verdict": "Safe".
+     - If the description indicates contamination, chemical smell, turbidity, brownish/greenish color, or nearby pollution, set "verdict": "Unsafe".
+     - If the input IS relevant to water but is ambiguous, borderline, or lacks definitive safety clarity, preserve the precautionary principle and default "verdict" to "Unsafe" with an appropriate confidence score and explanation.
+
 Respond with a JSON object containing exactly these fields:
 {
-  "label": "Safe" or "Unsafe",
-  "confidence": a float between 0 and 1,
-  "reasoning": a one to two sentence explanation of your assessment
+  "relevant": boolean,
+  "verdict": "Safe" | "Unsafe" | "Insufficient information",
+  "confidence": float between 0.0 and 1.0,
+  "reason": "one to two sentence concise explanation"
 }
 Respond with JSON only, no markdown, no preamble.`;
 
@@ -73,14 +90,30 @@ Respond with JSON only, no markdown, no preamble.`;
 
     try {
       const parsed = JSON.parse(textResponse);
-      const label = parsed.label === "Safe" || parsed.label === "Unsafe" ? parsed.label : "Unsafe";
-      const confidence = typeof parsed.confidence === "number" ? parsed.confidence : 0.5;
-      const reasoning = typeof parsed.reasoning === "string" ? parsed.reasoning : "";
+      const isRelevant = Boolean(parsed.relevant);
+      
+      let verdict: "Safe" | "Unsafe" | "Insufficient information";
+      if (!isRelevant || parsed.verdict === "Insufficient information") {
+        verdict = "Insufficient information";
+      } else if (parsed.verdict === "Safe") {
+        verdict = "Safe";
+      } else {
+        // Relevant but unsafe / borderline / ambiguous
+        verdict = "Unsafe";
+      }
+
+      const confidence = typeof parsed.confidence === "number" ? parsed.confidence : (verdict === "Insufficient information" ? 0.0 : 0.5);
+      const reason = typeof parsed.reason === "string" 
+        ? parsed.reason 
+        : (typeof parsed.reasoning === "string" ? parsed.reasoning : "");
 
       return NextResponse.json({
-        label,
+        label: verdict,
+        verdict,
+        relevant: verdict !== "Insufficient information",
         confidence: Number(confidence.toFixed(4)),
-        reasoning,
+        reason,
+        reasoning: reason,
       });
     } catch (parseError) {
       console.error("Failed to parse Gemini response as JSON:", textResponse, parseError);
